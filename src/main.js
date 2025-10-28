@@ -1,10 +1,11 @@
 import * as THREE from "three";
-import './style.scss'
+import './style.scss';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { anaglyphPass } from "three/examples/jsm/tsl/display/AnaglyphPassNode.js";
-import { AmbientLight } from 'three';
+import { AmbientLight } from 'three';  
+import gsap from "gsap";
 
 const canvas = document.querySelector("#experience-canvas");
 
@@ -15,6 +16,42 @@ const sizes = {
   width: window.innerWidth,
   height: window.innerHeight,
 };
+
+const modals = {
+  about: document.querySelector(".modal.about"), 
+};
+
+
+const showModal = (modal) => {
+  modal.style.display = "block";
+  gsap.set(modal, {opacity: 0});
+  gsap.to(modal, {opacity: 1, duration: 0.5});
+};
+
+const hideModal = (modal) => {
+  gsap.to(modal, {
+    opacity: 0, 
+    duration: 0.5,
+    onComplete: () => {
+      modal.style.display = "none";
+    },
+  });
+};
+
+document.querySelectorAll(".modal-exit-button").forEach((button) => {
+  button.addEventListener("click", (e) => {
+    const modal = e.target.closest(".modal");
+    hideModal(modal);
+  });
+});
+
+const Minecraft_Block = [];
+
+const raycasterObjects = [];
+let currentIntersects = [];
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
 
 //Loaders
 
@@ -28,6 +65,12 @@ loader.load(
   (glb) => {
     glb.scene.traverse((child) => {
       if (child.isMesh) {
+        if (child.name.includes("Minecraft_Block")){
+          Minecraft_Block.push(child);
+        }
+        if (child.name.includes("_Target")){
+          raycasterObjects.push(child);
+        }
       }
     });
     scene.add(glb.scene);
@@ -81,6 +124,20 @@ controls.maxAzimuthAngle = Math.PI / 2;
 controls.update();
 controls.target.set(0, 2, 0);
 
+window.addEventListener("mousemove", (event) => {
+    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+})
+
+window.addEventListener("click", (event) => {
+  if(currentIntersects.length > 0){
+    const object = currentIntersects[0].object;
+    if (object.name.includes("Poster")){
+      showModal(modals.about);
+    }
+  }
+});
+
 window.addEventListener("resize", () => {
   sizes.width = window.innerWidth;
   sizes.height = window.innerHeight;
@@ -100,6 +157,24 @@ const render = () => {
   cube.rotation.x += 0.01;
   cube.rotation.y += 0.01;
   */
+  Minecraft_Block.forEach((block) => {
+    block.rotation.y += 0.01;
+  });
+
+  //Raycaster
+  raycaster.setFromCamera( pointer, camera );
+  
+  currentIntersects = raycaster.intersectObjects(raycasterObjects);
+
+  for ( let i = 0; i < currentIntersects.length; i ++ ) {
+  }
+
+  if(currentIntersects.length > 0){
+    document.body.style.cursor = 'pointer';
+  }else{
+    document.body.style.cursor = 'default';
+  }
+
   renderer.render(scene, camera);
   window.requestAnimationFrame( render );
 };
