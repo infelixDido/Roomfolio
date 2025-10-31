@@ -1,0 +1,11 @@
+$base-blue: #2d365c;
+$base-light-blue: #d4e6e0;
+
+$base-black: #100011;
+$base-white: #fdfdfd;
+
+@mixin centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }

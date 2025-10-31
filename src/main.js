@@ -10,7 +10,7 @@ import gsap from "gsap";
 const canvas = document.querySelector("#experience-canvas");
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color("##B2BBD9");
+scene.background = new THREE.Color("0x000000)");
 
 const sizes = {
   width: window.innerWidth,
@@ -38,11 +38,104 @@ const hideModal = (modal) => {
   });
 };
 
-document.querySelectorAll(".modal-exit-button").forEach((button) => {
-  button.addEventListener("click", (e) => {
-    const modal = e.target.closest(".modal");
-    hideModal(modal);
+/**  -------------------------- Loading Screen & Intro Animation -------------------------- */
+
+const manager = new THREE.LoadingManager();
+
+const loadingScreen = document.querySelector(".loading-screen");
+const loadingScreenButton = document.querySelector(".loading-screen-button");
+
+manager.onLoad = function () {
+  loadingScreenButton.style.border = "8px solid #d4e6e0";
+  loadingScreenButton.style.background = "#01072c";
+  loadingScreenButton.style.color = "#e6dede";
+  loadingScreenButton.style.boxShadow = "rgba(0, 0, 0, 0.24) 0px 3px 8px";
+  loadingScreenButton.textContent = "Enter!";
+  loadingScreenButton.style.cursor = "pointer";
+  loadingScreenButton.style.transition =
+    "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)";
+  let isDisabled = false;
+
+  function handleEnter() {
+    if (isDisabled) return;
+
+    loadingScreenButton.style.cursor = "default";
+    loadingScreenButton.style.border = "8px solid #2d365c";
+    loadingScreenButton.style.background = "#d4e6e0";
+    loadingScreenButton.style.color = "#2a0f4e";
+    loadingScreenButton.style.boxShadow = "none";
+    loadingScreenButton.textContent = "- Welcome -";
+    loadingScreen.style.background = "#d4e6e0";
+    isDisabled = true;
+
+    playReveal();
+  }
+
+  loadingScreenButton.addEventListener("mouseenter", () => {
+    loadingScreenButton.style.transform = "scale(1.3)";
   });
+
+  loadingScreenButton.addEventListener("touchend", (e) => {
+    touchHappened = true;
+    e.preventDefault();
+    handleEnter();
+  });
+
+  loadingScreenButton.addEventListener("click", (e) => {
+    if (touchHappened) return;
+    handleEnter(true);
+  });
+
+  loadingScreenButton.addEventListener("mouseleave", () => {
+    loadingScreenButton.style.transform = "none";
+  });
+};
+
+function playReveal() {
+  const tl = gsap.timeline();
+
+  tl.to(loadingScreen, {
+    scale: 0.5,
+    duration: 1.2,
+    delay: 0.25,
+    ease: "back.in(1.8)",
+  }).to(
+    loadingScreen,
+    {
+      y: "200vh",
+      transform: "perspective(1000px) rotateX(45deg) rotateY(-35deg)",
+      duration: 1.2,
+      ease: "back.in(1.8)",
+      onComplete: () => {
+        isModalOpen = false;
+        loadingScreen.remove();
+      },
+    },
+    "-=0.1"
+  );
+}
+
+let touchHappened = false;
+document.querySelectorAll(".modal-exit-button").forEach((button) => {
+  button.addEventListener(
+    "touchend", 
+    (e) => {
+      touchHappened = true;
+      const modal = e.target.closest(".modal");
+      hideModal(modal);
+    },
+    {passive: false}
+  );
+  
+  button.addEventListener(
+    "click", 
+    (e) => {
+      if (touchHappened) return;
+      const modal = e.target.closest(".modal");
+      hideModal(modal);
+    },
+    {passive: false}
+  );
 });
 
 const Minecraft_Block = [];
@@ -54,11 +147,13 @@ const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
 //Loaders
-
-const loader = new GLTFLoader();
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('/draco/');
+
+const loader = new GLTFLoader(manager);
 loader.setDRACOLoader(dracoLoader);
+
+
 
 loader.load(
   'models/roomfolio_no_bake_v2-v1.glb',
@@ -117,7 +212,7 @@ controls.dampingFactor = 0.05;
 controls.minDistance = 5;
 controls.maxDistance = 45;
 controls.minPolarAngle = 0;
-controls.maxPolarAngle = Math.PI / 2.5;
+controls.maxPolarAngle = Math.PI / 2.2;
 controls.minAzimuthAngle = 0;
 controls.maxAzimuthAngle = Math.PI / 2;
 
@@ -125,18 +220,40 @@ controls.update();
 controls.target.set(0, 2, 0);
 
 window.addEventListener("mousemove", (event) => {
-    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-})
+    touchHappened = false;
+    pointer.x = ( event.clientX / sizes.width ) * 2 - 1;
+    pointer.y = - ( event.clientY / sizes.height ) * 2 + 1;
+});
 
-window.addEventListener("click", (event) => {
+window.addEventListener(
+  "touchstart", 
+  (event) => {
+    event.preventDefault();
+    pointer.x = ( event.touches[0].clientX / sizes.width ) * 2 - 1;
+    pointer.y = - ( event.touches[0].clientY / sizes.height ) * 2 + 1;
+  }, 
+  {passive: false}
+);
+
+window.addEventListener(
+  "touchend", 
+  (event) => {
+    event.preventDefault();
+    handleRaycasterInteraction();
+  },
+  {passive: false}
+);
+
+function handleRaycasterInteraction() {
   if(currentIntersects.length > 0){
     const object = currentIntersects[0].object;
-    if (object.name.includes("Poster")){
+    if (object.name.includes("Poster") || object.name.includes()){
       showModal(modals.about);
     }
   }
-});
+}
+
+window.addEventListener("click", handleRaycasterInteraction);
 
 window.addEventListener("resize", () => {
   sizes.width = window.innerWidth;
