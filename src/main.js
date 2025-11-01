@@ -10,7 +10,7 @@ import gsap from "gsap";
 const canvas = document.querySelector("#experience-canvas");
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color("0x000000)");
+scene.background = new THREE.Color(0xe6efff);
 
 const sizes = {
   width: window.innerWidth,
@@ -107,7 +107,6 @@ function playReveal() {
       duration: 1.2,
       ease: "back.in(1.8)",
       onComplete: () => {
-        isModalOpen = false;
         loadingScreen.remove();
       },
     },
@@ -180,7 +179,17 @@ loader.load(
 
 const ambientLight = new AmbientLight(0xfff5b6, 5); // Color, Intensity
 scene.add(ambientLight);
- 
+
+const handSprite = new THREE.Sprite(
+  new THREE.SpriteMaterial({
+    map: new THREE.TextureLoader().load('/textures/click_full_white.png'),
+    transparent: true,
+  })
+);
+handSprite.scale.set(1, 1, 1);
+handSprite.position.set(-2.8, 8, -5.8);
+scene.add(handSprite);
+
 
 const camera = new THREE.PerspectiveCamera(
   35,
@@ -249,6 +258,7 @@ function handleRaycasterInteraction() {
     const object = currentIntersects[0].object;
     if (object.name.includes("Poster") || object.name.includes()){
       showModal(modals.about);
+      handSprite.visible = false;
     }
   }
 }
@@ -277,6 +287,11 @@ const render = () => {
   Minecraft_Block.forEach((block) => {
     block.rotation.y += 0.01;
   });
+
+  const pulsetime = Date.now() * 0.003;
+  const brightness = 0.8 + Math.sin(pulsetime) * 0.2;
+  handSprite.material.color.setRGB(brightness, brightness, brightness);
+  handSprite.material.opacity = 0.8 + Math.sin(pulsetime) * 0.2;
 
   //Raycaster
   raycaster.setFromCamera( pointer, camera );
