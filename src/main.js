@@ -19,6 +19,7 @@ const sizes = {
 
 const modals = {
   about: document.querySelector(".modal.about"), 
+  minecraft: document.querySelector(".modal.minecraft"),
 };
 
 
@@ -256,9 +257,12 @@ window.addEventListener(
 function handleRaycasterInteraction() {
   if(currentIntersects.length > 0){
     const object = currentIntersects[0].object;
-    if (object.name.includes("Poster") || object.name.includes()){
+    if (object.name.includes("Poster")){
       showModal(modals.about);
       handSprite.visible = false;
+    }
+    if (object.name.includes("Minecraft_Block")){
+      showModal(modals.minecraft);
     }
   }
 }
